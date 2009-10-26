@@ -55,20 +55,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#if (STAT_STATVFS \
-     && (HAVE_STRUCT_STATVFS_F_BASETYPE || HAVE_STRUCT_STATVFS_F_FSTYPENAME))
-#   define USE_STATVFS 1
+#if defined(STAT_STATVFS) \
+     && (defined(HAVE_STRUCT_STATVFS_F_BASETYPE) \
+         || defined(HAVE_STRUCT_STATVFS_F_FSTYPENAME))
 #   include <sys/statvfs.h>
 #   define STRUCT_STATFS struct statvfs
 #   define STATFS statvfs
-#elif HAVE_STATFS && !STAT_STATFS4
-#   define USE_STATFS 1
-#   if HAVE_SYS_VFS_H
+#elif defined(HAVE_STATFS) && !defined(STAT_STATFS4)
+#   ifdef HAVE_SYS_VFS_H
 #      include <sys/vfs.h>
-#   elif HAVE_SYS_MOUNT_H && HAVE_SYS_PARAM_H
+#   elif defined(HAVE_SYS_MOUNT_H) && defined(HAVE_SYS_PARAM_H)
 #      include <sys/param.h>
 #      include <sys/mount.h>
-#   elif HAVE_SYS_STATFS_H
+#   elif defined(HAVE_SYS_STATFS_H)
 #      include <sys/statfs.h>
 #   endif
 #   define STRUCT_STATFS struct statfs
@@ -169,7 +168,7 @@ enum {
 static int
 filegui__check_attrs_on_fs(const char *fs_path)
 {
-#if USE_STATFS || USE_STATVFS
+#ifdef STATFS
     STRUCT_STATFS stfs;
 
     if (STATFS(fs_path, &stfs)!=0)
@@ -188,7 +187,8 @@ filegui__check_attrs_on_fs(const char *fs_path)
         return 0;
         break;
     }
-# elif HAVE_STRUCT_STATFS_F_FSTYPENAME || HAVE_STRUCT_STATVFS_F_FSTYPENAME
+# elif defined(HAVE_STRUCT_STATFS_F_FSTYPENAME) \
+      || defined(HAVE_STRUCT_STATVFS_F_FSTYPENAME)
     if (!strcmp(stfs.f_fstypename, "msdos")
         || !strcmp(stfs.f_fstypename, "msdosfs")
         || !strcmp(stfs.f_fstypename, "ntfs")
@@ -196,7 +196,7 @@ filegui__check_attrs_on_fs(const char *fs_path)
         || !strcmp(stfs.f_fstypename, "smbfs")
         || strstr(stfs.f_fstypename, "fusefs"))
         return 0;
-# elif HAVE_STRUCT_STATVFS_F_BASETYPE
+# elif defined(HAVE_STRUCT_STATVFS_F_BASETYPE)
     if (!strcmp(stfs.f_basetype, "pcfs")
         || !strcmp(stfs.f_basetype, "ntfs")
         || !strcmp(stfs.f_basetype, "proc")
@@ -204,7 +204,7 @@ filegui__check_attrs_on_fs(const char *fs_path)
         || !strcmp(stfs.f_basetype, "fuse"))
         return 0;
 # endif
-#endif /* USE_STATFS || USE_STATVFS */
+#endif /* STATFS */
 
     return 1;
 }
